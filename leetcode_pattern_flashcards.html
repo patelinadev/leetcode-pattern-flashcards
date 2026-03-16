@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LeetCode Pattern Flashcards</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f4f0; --surface: #ffffff; --surface2: #f0efe9;
+    --text: #1a1a18; --text2: #6b6a65; --text3: #a09f9a;
+    --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
+    --radius: 14px; --font: -apple-system,'Segoe UI',sans-serif;
+    --mono: 'SF Mono','Fira Code','Cascadia Code',monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18; --surface: #252522; --surface2: #2e2e2b;
+      --text: #f0efe9; --text2: #a09f9a; --text3: #6b6a65;
+      --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
+    }
+  }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; padding: 1rem; }
+  header { text-align: center; padding: 1.5rem 0 1rem; }
+  header h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  header p { font-size: 13px; color: var(--text2); }
+  .nav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 1rem 0 1.5rem; padding: 0 0.5rem; }
+  .nav-btn { font-size: 12px; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border2); background: var(--surface); color: var(--text2); cursor: pointer; transition: all 0.15s; font-family: var(--font); }
+  .nav-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .card-area { perspective: 1200px; max-width: 640px; margin: 0 auto 1rem; }
+  .card-wrap { width: 100%; min-height: 380px; position: relative; transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(.4,0,.2,1); cursor: pointer; }
+  .card-wrap.flipped { transform: rotateY(180deg); }
+  .face { position: absolute; inset: 0; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); backface-visibility: hidden; -webkit-backface-visibility: hidden; padding: 1.5rem; display: flex; flex-direction: column; }
+  .back { transform: rotateY(180deg); overflow-y: auto; }
+  .tag { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 1.25rem; text-transform: uppercase; width: fit-content; }
+  .pattern-name { font-size: 26px; font-weight: 600; margin-bottom: 1rem; line-height: 1.2; }
+  .signals-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
+  .signals { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
+  .signal-chip { font-size: 12px; padding: 4px 10px; border-radius: 10px; background: var(--surface2); color: var(--text2); border: 1px solid var(--border); font-family: var(--mono); }
+  .flip-hint { margin-top: auto; font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 5px; }
+  .back-content { display: flex; flex-direction: column; gap: 0.9rem; }
+  .section-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
+  .insight { font-size: 14px; color: var(--text); line-height: 1.65; }
+  .mental-model { background: var(--surface2); border-radius: 10px; padding: 0.75rem 1rem; font-size: 13px; color: var(--text2); line-height: 1.6; border-left: 3px solid var(--border2); }
+  .logic-note { font-size: 12px; color: var(--text3); line-height: 1.5; }
+  .code-block { background: var(--surface2); border-radius: 10px; padding: 0.75rem 1rem; font-family: var(--mono); font-size: 12px; color: var(--text); line-height: 1.75; overflow-x: auto; white-space: pre; border: 1px solid var(--border); }
+  .lc-links { display: flex; flex-wrap: wrap; gap: 6px; }
+  .lc-link { font-size: 12px; padding: 5px 11px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border2); color: #185FA5; text-decoration: none; }
+  @media (prefers-color-scheme: dark) { .lc-link { color: #85B7EB; } }
+  .controls { display: flex; align-items: center; justify-content: space-between; max-width: 640px; margin: 0 auto; padding: 0 0.25rem; }
+  .ctrl-btn { font-size: 14px; padding: 9px 22px; border: 1px solid var(--border2); border-radius: 10px; background: var(--surface); color: var(--text); cursor: pointer; font-family: var(--font); transition: background 0.1s; }
+  .ctrl-btn:hover { background: var(--surface2); }
+  .ctrl-btn:active { transform: scale(0.97); }
+  .progress { font-size: 14px; color: var(--text2); font-weight: 500; }
+  .keyboard-hint { text-align: center; margin-top: 1.25rem; font-size: 12px; color: var(--text3); }
+  kbd { background: var(--surface2); border: 1px solid var(--border2); border-radius: 5px; padding: 2px 6px; font-size: 11px; font-family: var(--mono); }
+  @media (max-width: 480px) { body { padding: 0.75rem; } .pattern-name { font-size: 22px; } .face { padding: 1.25rem; } .ctrl-btn { padding: 8px 16px; font-size: 13px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>LeetCode Pattern Flashcards</h1>
+  <p>Tap card to flip &nbsp;·&nbsp; arrows or keyboard to navigate</p>
+</header>
+<div class="nav" id="nav"></div>
+<div class="card-area">
+  <div class="card-wrap" id="card" onclick="flip()">
+    <div class="face front" id="front"></div>
+    <div class="face back" id="back"></div>
+  </div>
+</div>
+<div class="controls">
+  <button class="ctrl-btn" onclick="prev()">&#8592; prev</button>
+  <span class="progress" id="progress"></span>
+  <button class="ctrl-btn" onclick="next()">next &#8594;</button>
+</div>
+<div class="keyboard-hint"><kbd>&larr;</kbd> <kbd>&rarr;</kbd> navigate &nbsp;&middot;&nbsp; <kbd>Space</kbd> flip</div>
+
+<script>
+const P = [
+  { name:"Two Pointers", cat:"Array", tagBg:"#dbeafe", tagFg:"#1e3a8a",
+    signals:["pair of elements","sorted array","find two indices","opposite ends","palindrome"],
+    insight:"Two pointers move toward each other (or same direction) to avoid O(n\xB2) brute-force. Works when array is sorted or when you can make a greedy decision about which pointer to move.",
+    mental:"Like two people walking toward each other on a street \u2014 when they meet, you have your answer.",
+    logic:"Sequence + Total Order: you can compare any two elements and decide which pointer to advance.",
+    tmpl:"l, r = 0, len(arr) - 1\nwhile l < r:\n    s = arr[l] + arr[r]\n    if s == target:   return [l, r]\n    elif s < target: l += 1\n    else:            r -= 1",
+    lc:[["167. Two Sum II","https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/"],["15. 3Sum","https://leetcode.com/problems/3sum/"],["11. Container With Most Water","https://leetcode.com/problems/container-with-most-water/"]]},
+  { name:"Sliding Window", cat:"Array", tagBg:"#dbeafe", tagFg:"#1e3a8a",
+    signals:["subarray","substring","window size k","max/min sum","contiguous","at most k distinct"],
+    insight:"Maintain a window [left, right]. Expand right each step. Shrink left when window violates the constraint. Reduces O(n\xB2) to O(n) by reusing previous computation.",
+    mental:"Like an assembly line window \u2014 slide it along, add new item on right, drop old on left when overfull.",
+    logic:"Iteration + Containment: the window contains a subproblem; recurrence builds on previous state.",
+    tmpl:"left = 0\nfor right in range(len(s)):\n    window[s[right]] += 1\n    while window_invalid():\n        window[s[left]] -= 1\n        left += 1\n    ans = max(ans, right - left + 1)",
+    lc:[["3. Longest Substring Without Repeating","https://leetcode.com/problems/longest-substring-without-repeating-characters/"],["76. Minimum Window Substring","https://leetcode.com/problems/minimum-window-substring/"],["239. Sliding Window Maximum","https://leetcode.com/problems/sliding-window-maximum/"]]},
+  { name:"HashMap / HashSet", cat:"Array", tagBg:"#dcfce7", tagFg:"#14532d",
+    signals:["duplicate","frequency","seen before","index lookup","count occurrences","two sum","anagram"],
+    insight:"Use a HashMap for O(1) lookup by value. Key insight: store what you've SEEN so far, then check if the complement/pair already exists.",
+    mental:"Like parallel, independent key-value pairs \u2014 each entry is completely independent. Looking up one doesn't affect any other.",
+    logic:"Mapping (Function): each key maps to exactly one value. Parallel: entries are independent.",
+    tmpl:"seen = {}\nfor i, num in enumerate(nums):\n    complement = target - num\n    if complement in seen:\n        return [seen[complement], i]\n    seen[num] = i",
+    lc:[["1. Two Sum","https://leetcode.com/problems/two-sum/"],["242. Valid Anagram","https://leetcode.com/problems/valid-anagram/"],["49. Group Anagrams","https://leetcode.com/problems/group-anagrams/"]]},
+  { name:"Stack", cat:"Linear", tagBg:"#fef9c3", tagFg:"#713f12",
+    signals:["matching brackets","next greater element","valid parentheses","monotone","undo operations","nested structure"],
+    insight:"Stack = LIFO. Use when you need to remember the most recent unresolved item. Monotonic stack maintains a sorted stack \u2014 used for next greater/smaller element problems.",
+    mental:"Like undo history \u2014 most recent thing is on top. Or a stack of plates: last in, first out.",
+    logic:"Containment + Sequence: nested structures naturally map to stacks. The call stack itself IS a stack.",
+    tmpl:"stack = []\nfor ch in s:\n    if ch in open_set:\n        stack.append(ch)\n    elif ch in close_set:\n        if not stack or stack[-1] != match[ch]:\n            return False\n        stack.pop()\nreturn not stack",
+    lc:[["20. Valid Parentheses","https://leetcode.com/problems/valid-parentheses/"],["739. Daily Temperatures","https://leetcode.com/problems/daily-temperatures/"],["84. Largest Rectangle in Histogram","https://leetcode.com/problems/largest-rectangle-in-histogram/"]]},
+  { name:"Fast & Slow Pointers", cat:"Linked List", tagBg:"#fef9c3", tagFg:"#713f12",
+    signals:["linked list","cycle","middle node","kth from end","circular"],
+    insight:"Two pointers move at different speeds. If there's a cycle, the fast pointer will eventually lap the slow one. Finds cycles and midpoints without extra space.",
+    mental:"Like two runners on a circular track \u2014 if the track loops, the fast runner will catch the slow one.",
+    logic:"Recurrence: each step depends on previous pointer positions. Transitivity: if A\u2192B\u2192C, reachability flows.",
+    tmpl:"slow = fast = head\nwhile fast and fast.next:\n    slow = slow.next\n    fast = fast.next.next\n    if slow == fast:  # cycle!\n        return True\nreturn False",
+    lc:[["141. Linked List Cycle","https://leetcode.com/problems/linked-list-cycle/"],["142. Linked List Cycle II","https://leetcode.com/problems/linked-list-cycle-ii/"],["876. Middle of the Linked List","https://leetcode.com/problems/middle-of-the-linked-list/"]]},
+  { name:"Tree DFS", cat:"Tree", tagBg:"#d1fae5", tagFg:"#064e3b",
+    signals:["tree","path","depth","recursion","preorder/inorder/postorder","root to leaf","max depth"],
+    insight:"DFS on a tree is almost always recursive. Key question: process node BEFORE (preorder), BETWEEN (inorder), or AFTER (postorder) recursing on children? Inorder on BST gives sorted order.",
+    mental:"Call yourself on a smaller problem (child), trust the base case stops you. Induction: if it works for children, it works for parent.",
+    logic:"Recursion + Hierarchy: tree IS a recursive structure. Containment: parent contains children.",
+    tmpl:"def dfs(node):\n    if not node:\n        return base_value\n    left  = dfs(node.left)\n    right = dfs(node.right)\n    return combine(node.val, left, right)",
+    lc:[["104. Max Depth of Binary Tree","https://leetcode.com/problems/maximum-depth-of-binary-tree/"],["112. Path Sum","https://leetcode.com/problems/path-sum/"],["543. Diameter of Binary Tree","https://leetcode.com/problems/diameter-of-binary-tree/"]]},
+  { name:"Tree BFS", cat:"Tree", tagBg:"#d1fae5", tagFg:"#064e3b",
+    signals:["level order","level by level","shortest path in tree","rightmost node","cousins","zigzag"],
+    insight:"BFS processes nodes level by level using a queue. Record queue length = nodes at current level. Process exactly that many before moving to the next level.",
+    mental:"Like water spreading outward from a stone dropped in a pond \u2014 level 1, then level 2, then level 3.",
+    logic:"Iteration + Hierarchy: BFS respects tree levels. Queue enforces FIFO order.",
+    tmpl:"from collections import deque\nq = deque([root])\nwhile q:\n    for _ in range(len(q)):  # one level\n        node = q.popleft()\n        if node.left:  q.append(node.left)\n        if node.right: q.append(node.right)",
+    lc:[["102. Binary Tree Level Order Traversal","https://leetcode.com/problems/binary-tree-level-order-traversal/"],["199. Binary Tree Right Side View","https://leetcode.com/problems/binary-tree-right-side-view/"],["994. Rotting Oranges","https://leetcode.com/problems/rotting-oranges/"]]},
+  { name:"Binary Search", cat:"Search", tagBg:"#ede9fe", tagFg:"#3b0764",
+    signals:["sorted array","find target","search","min/max satisfying condition","rotated sorted","O(log n)"],
+    insight:"Requires TOTAL ORDER (all elements comparable) and MONOTONICITY (if mid works, larger/smaller also works). When you see 'find minimum X such that condition holds', binary search the answer space.",
+    mental:"Like a number guessing game: go to the middle, eliminate half. Works because total order lets you always compare two elements.",
+    logic:"Total Order + Monotonicity: these two discrete math properties ENABLE binary search.",
+    tmpl:"l, r = 0, len(arr) - 1\nwhile l <= r:\n    mid = (l + r) // 2\n    if arr[mid] == target:   return mid\n    elif arr[mid] < target:  l = mid + 1\n    else:                    r = mid - 1\nreturn -1",
+    lc:[["704. Binary Search","https://leetcode.com/problems/binary-search/"],["33. Search in Rotated Sorted Array","https://leetcode.com/problems/search-in-rotated-sorted-array/"],["1011. Capacity To Ship Packages","https://leetcode.com/problems/capacity-to-ship-packages-within-d-days/"]]},
+  { name:"Graph BFS / DFS", cat:"Graph", tagBg:"#fce7f3", tagFg:"#500724",
+    signals:["grid","matrix","connected components","shortest path","islands","flood fill","reachability"],
+    insight:"Graphs model reachability (Transitivity: if A\u2192B and B\u2192C, then A\u2192C). BFS finds shortest path in unweighted graphs. DFS finds connected components. Always track visited to avoid infinite loops.",
+    mental:"Like disease spread \u2014 if Alice infects Bob and Bob infects Carol, Alice indirectly infects Carol. Transitivity.",
+    logic:"Transitivity + Transitive Closure: DFS/BFS computes ALL nodes reachable from start.",
+    tmpl:"from collections import deque\ndef bfs(graph, start):\n    visited = {start}\n    q = deque([start])\n    while q:\n        node = q.popleft()\n        for nei in graph[node]:\n            if nei not in visited:\n                visited.add(nei)\n                q.append(nei)",
+    lc:[["200. Number of Islands","https://leetcode.com/problems/number-of-islands/"],["133. Clone Graph","https://leetcode.com/problems/clone-graph/"],["207. Course Schedule","https://leetcode.com/problems/course-schedule/"]]},
+  { name:"Topological Sort", cat:"Graph", tagBg:"#fce7f3", tagFg:"#500724",
+    signals:["prerequisite","dependency","ordering tasks","DAG","course schedule","build order","directed acyclic"],
+    insight:"Orders a DAG so all dependencies come before dependents. BFS (Kahn's): start with in-degree 0 nodes, process them, reduce neighbors' in-degree, add newly freed nodes to queue.",
+    mental:"Like getting dressed: socks before shoes. Dependency = Partial Order: not all tasks are comparable, but dependencies must be respected.",
+    logic:"Partial Order + Dependency: topological sort linearizes a partial order into a total order.",
+    tmpl:"in_deg = [0]*n\ngraph = defaultdict(list)\nfor a,b in prerequisites:\n    graph[b].append(a); in_deg[a]+=1\nq = deque([i for i in range(n) if in_deg[i]==0])\ncnt = 0\nwhile q:\n    node=q.popleft(); cnt+=1\n    for nei in graph[node]:\n        in_deg[nei]-=1\n        if in_deg[nei]==0: q.append(nei)\nreturn cnt==n",
+    lc:[["207. Course Schedule","https://leetcode.com/problems/course-schedule/"],["210. Course Schedule II","https://leetcode.com/problems/course-schedule-ii/"]]},
+  { name:"Heap (Priority Queue)", cat:"Heap", tagBg:"#ffedd5", tagFg:"#7c2d12",
+    signals:["top K","K largest","K smallest","median","priority","most frequent","always need min/max quickly"],
+    insight:"Heap gives O(log n) insert and O(1) peek at min/max. Python's heapq is min-heap by default \u2014 negate values for max-heap. See 'K' + 'largest/smallest/frequent'? Think heap.",
+    mental:"Like a self-sorting line where the most important person always cuts to front. Hierarchy: parent always smaller than children.",
+    logic:"Hierarchy + Partial Order: heap is a tree enforcing weak ordering (parent \u2264 children).",
+    tmpl:"import heapq\nheap = []\nfor num in nums:\n    heapq.heappush(heap, num)\n    if len(heap) > k:\n        heapq.heappop(heap)\nreturn heap[0]  # kth smallest",
+    lc:[["215. Kth Largest Element","https://leetcode.com/problems/kth-largest-element-in-an-array/"],["347. Top K Frequent Elements","https://leetcode.com/problems/top-k-frequent-elements/"],["295. Find Median from Data Stream","https://leetcode.com/problems/find-median-from-data-stream/"]]},
+  { name:"Backtracking", cat:"Recursion", tagBg:"#dcfce7", tagFg:"#14532d",
+    signals:["all combinations","all permutations","all subsets","generate all","word search","N-Queens"],
+    insight:"Backtracking = DFS on a decision tree. At each step: try a choice, recurse, then UNDO the choice. The undo step is what makes it backtracking \u2014 not just plain recursion.",
+    mental:"Like exploring a maze: go down a path, hit a dead end, back up and try the next path. Building a partial solution by composing choices.",
+    logic:"Recursion + Combination: each call adds one decision to the partial solution, then undoes it.",
+    tmpl:"def backtrack(start, path):\n    if len(path) == k:\n        result.append(path[:])\n        return\n    for i in range(start, len(nums)):\n        path.append(nums[i])    # choose\n        backtrack(i+1, path)    # explore\n        path.pop()              # undo\nresult=[]; backtrack(0,[])",
+    lc:[["78. Subsets","https://leetcode.com/problems/subsets/"],["46. Permutations","https://leetcode.com/problems/permutations/"],["39. Combination Sum","https://leetcode.com/problems/combination-sum/"]]},
+  { name:"Dynamic Programming", cat:"DP", tagBg:"#ede9fe", tagFg:"#3b0764",
+    signals:["optimal solution","count ways","minimum/maximum","overlapping subproblems","can you achieve","how many ways"],
+    insight:"DP = Recurrence Relation + memoization. Identify: (1) what's the subproblem? (2) how does dp[i] depend on previous dp values? (3) what's the base case?",
+    mental:"Like your bank balance: today's = yesterday's + today's transactions. Each state builds on previous states.",
+    logic:"Recurrence Relation + Combination: dp[i] is defined by combining previous states \u2014 exactly like discrete math recurrences.",
+    tmpl:"# 1D DP\ndp = [0]*(n+1)\ndp[0]=1; dp[1]=1\nfor i in range(2,n+1):\n    dp[i] = dp[i-1] + dp[i-2]\n\n# 2D DP\ndp = [[1]*cols for _ in range(rows)]\nfor i in range(1,rows):\n    for j in range(1,cols):\n        dp[i][j] = dp[i-1][j] + dp[i][j-1]",
+    lc:[["70. Climbing Stairs","https://leetcode.com/problems/climbing-stairs/"],["322. Coin Change","https://leetcode.com/problems/coin-change/"],["300. Longest Increasing Subsequence","https://leetcode.com/problems/longest-increasing-subsequence/"]]}
+];
+
+const CATS = ["All",...new Set(P.map(p=>p.cat))];
+let fil=[...P], cur=0, flipped=false, activeCat="All";
+
+function buildNav(){
+  document.getElementById('nav').innerHTML=CATS.map(c=>
+    `<button class="nav-btn ${c===activeCat?'active':''}" onclick="filterCat('${c}')">${c}</button>`
+  ).join('');
+}
+
+function filterCat(cat){
+  activeCat=cat;
+  fil=cat==="All"?[...P]:P.filter(p=>p.cat===cat);
+  cur=0; flipped=false;
+  document.getElementById('card').classList.remove('flipped');
+  buildNav(); render();
+}
+
+function render(){
+  const p=fil[cur];
+  document.getElementById('front').innerHTML=`
+    <span class="tag" style="background:${p.tagBg};color:${p.tagFg}">${p.cat}</span>
+    <div class="pattern-name">${p.name}</div>
+    <div class="signals-label">Signal keywords</div>
+    <div class="signals">${p.signals.map(s=>`<span class="signal-chip">${s}</span>`).join('')}</div>
+    <div class="flip-hint"><span>&#8597;</span> tap to flip</div>`;
+  document.getElementById('back').innerHTML=`
+    <div class="back-content">
+      <div><div class="section-label">Core insight</div><div class="insight">${p.insight}</div></div>
+      <div class="mental-model">${p.mental}</div>
+      <div><div class="section-label">Why it works</div><div class="logic-note">${p.logic}</div></div>
+      <div><div class="section-label">Template</div><div class="code-block">${p.tmpl}</div></div>
+      <div><div class="section-label">Practice</div><div class="lc-links">${p.lc.map(([t,u])=>`<a class="lc-link" href="${u}" target="_blank">${t}</a>`).join('')}</div></div>
+    </div>`;
+  document.getElementById('progress').textContent=`${cur+1} / ${fil.length}`;
+}
+
+function flip(){flipped=!flipped;document.getElementById('card').classList.toggle('flipped',flipped);}
+function next(){cur=(cur+1)%fil.length;flipped=false;document.getElementById('card').classList.remove('flipped');render();}
+function prev(){cur=(cur-1+fil.length)%fil.length;flipped=false;document.getElementById('card').classList.remove('flipped');render();}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight')next();
+  else if(e.key==='ArrowLeft')prev();
+  else if(e.key===' '){e.preventDefault();flip();}
+});
+buildNav(); render();
+</script>
+</body>
+</html>
